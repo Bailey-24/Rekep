@@ -8,6 +8,7 @@ import math
 from numba import njit
 import numpy as np
 from scipy.spatial.transform import Rotation as R
+import torch
 
 PI = np.pi
 EPS = np.finfo(float).eps * 4.0
@@ -147,6 +148,10 @@ def quat_multiply(quaternion1, quaternion0):
     Returns:
         np.array: (x,y,z,w) multiplied quaternion
     """
+    if isinstance(quaternion0, torch.Tensor):
+        quaternion0 = quaternion0.detach().cpu().numpy()
+    if isinstance(quaternion1, torch.Tensor):
+        quaternion1 = quaternion1.detach().cpu().numpy()
     x0, y0, z0, w0 = quaternion0
     x1, y1, z1, w1 = quaternion1
     return np.array(
@@ -176,6 +181,8 @@ def quat_conjugate(quaternion):
     Returns:
         np.array: (x,y,z,w) quaternion conjugate
     """
+    if isinstance(quaternion, torch.Tensor):
+        quaternion = quaternion.detach().cpu().numpy()
     return np.array(
         (-quaternion[0], -quaternion[1], -quaternion[2], quaternion[3]),
         dtype=quaternion.dtype,
@@ -455,6 +462,8 @@ def pose2mat(pose):
     Returns:
         np.array: 4x4 homogeneous matrix
     """
+    if isinstance(pose[0], torch.Tensor):
+        pose = [p.detach().cpu().numpy() if isinstance(p, torch.Tensor) else p for p in pose]
     homo_pose_mat = np.zeros((4, 4), dtype=pose[0].dtype)
     homo_pose_mat[:3, :3] = quat2mat(pose[1])
     homo_pose_mat[:3, 3] = np.array(pose[0], dtype=pose[0].dtype)

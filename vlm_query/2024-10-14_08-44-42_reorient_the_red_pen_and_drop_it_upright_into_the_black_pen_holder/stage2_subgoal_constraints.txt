@@ -1,0 +1,6 @@
+def stage2_subgoal_constraint1(end_effector, keypoints):
+    """The red pen is upright (parallel to the z-axis)."""
+    pen_vector = keypoints[3] - keypoints[1]
+    z_axis = np.array([0, 0, 1])
+    return np.arccos(np.dot(pen_vector, z_axis) / (np.linalg.norm(pen_vector) * np.linalg.norm(z_axis)))
+

@@ -16,7 +16,7 @@ def encode_image(image_path):
 class ConstraintGenerator:
     def __init__(self, config):
         self.config = config
-        self.client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
+        self.client = OpenAI(api_key=os.environ['OPENAI_API_KEY'], base_url="https://api.chatanywhere.tech/v1")
         self.base_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), './vlm_query')
         with open(os.path.join(self.base_dir, 'prompt_template.txt'), 'r') as f:
             self.prompt_template = f.read()
@@ -91,7 +91,7 @@ class ConstraintGenerator:
                 break
         if grasp_keypoints is None:
             raise ValueError("grasp_keypoints not found in output")
-        # convert into list of ints
+        # convert into list of ints 
         grasp_keypoints = grasp_keypoints['grasp_keypoints'].replace("[", "").replace("]", "").split(",")
         grasp_keypoints = [int(x.strip()) for x in grasp_keypoints]
         data_dict['grasp_keypoints'] = grasp_keypoints

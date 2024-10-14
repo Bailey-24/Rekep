@@ -492,9 +492,9 @@
             "pen_1": {
                 "root_link": {
                     "pos": [
-                        -0.30,
+                        -0.35,
                         -0.15,
-                        0.7780028676986694
+                        0.7163046002388
                     ],
                     "ori": [ -0.7071068, 0, 0, 0.7071068 ],
                     "lin_vel": [
@@ -511,6 +511,7 @@
                 "joints": {},
                 "non_kin": {}
             },
+
             "pencil_holder_1": {
                 "root_link": {
                     "pos": [
@@ -894,7 +895,7 @@
                     "category": "breakfast_table",
                     "model": "dnsjnv",
                     "uuid": 88058023,
-                    "scale": 2
+                    "scale": [2.0,2.0,2.0]
                 }
             },
             "pen_1": {
@@ -912,6 +913,7 @@
                     ]
                 }
             },
+            
             "pencil_holder_1": {
                 "class_module": "omnigibson.objects.dataset_object",
                 "class_name": "DatasetObject",

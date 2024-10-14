@@ -16,7 +16,7 @@ main:
 env:
   video_cache_size: 2000
   og_sim:
-    physics_frequency: 100
+    physics_frequency: 60
     action_frequency: 15
     
   scene:
@@ -101,7 +101,7 @@ keypoint_proposer:
   seed: *seed
 
 constraint_generator:
-  model: chatgpt-4o-latest
+  model: gpt-4o
   temperature: 0.0
   max_tokens: 2048
 

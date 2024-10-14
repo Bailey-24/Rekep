@@ -1,6 +1,7 @@
 from omnigibson.sensors.vision_sensor import VisionSensor
 import transform_utils as T
 import numpy as np
+import torch
 
 class OGCamera:
     """
@@ -86,6 +87,10 @@ def get_cam_extrinsics(cam):
     return T.pose_inv(T.pose2mat(cam.get_position_orientation()))
 
 def pixel_to_3d_points(depth_image, intrinsics, extrinsics):
+    # if torch.is_tensor(intrinsics):
+    #     intrinsics = intrinsics.detach().cpu().numpy()
+    # if torch.is_tensor(extrinsics):
+    #     extrinsics = extrinsics.detach().cpu().numpy()
     # Get the shape of the depth image
     H, W = depth_image.shape
 
@@ -97,6 +102,8 @@ def pixel_to_3d_points(depth_image, intrinsics, extrinsics):
     cx, cy = intrinsics[0, 2], intrinsics[1, 2]
 
     # Convert pixel coordinates to normalized camera coordinates
+    if torch.is_tensor(depth_image):
+        depth_image = depth_image.detach().cpu().numpy()
     z = depth_image
     x = (i - cx) * z / fx
     y = (j - cy) * z / fy

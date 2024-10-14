@@ -11,6 +11,9 @@ class KeypointProposer:
         self.config = config
         self.device = torch.device(self.config['device'])
         self.dinov2 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vits14').eval().to(self.device)
+        # local_model_path = '/omnigibson-src/ReKep/dinov2_vits14_pretrain.pth'
+        # checkpoint = torch.load(local_model_path)
+        # self.dinov2 = checkpoint
         self.bounds_min = np.array(self.config['bounds_min'])
         self.bounds_max = np.array(self.config['bounds_max'])
         self.mean_shift = MeanShift(bandwidth=self.config['min_dist_bt_keypoints'], bin_seeding=True, n_jobs=32)
@@ -21,10 +24,11 @@ class KeypointProposer:
 
     def get_keypoints(self, rgb, points, masks):
         # preprocessing
+        # breakpoint()
         transformed_rgb, rgb, points, masks, shape_info = self._preprocess(rgb, points, masks)
         # get features
         features_flat = self._get_features(transformed_rgb, shape_info)
-        # for each mask, cluster in feature space to get meaningful regions, and uske their centers as keypoint candidates
+        # for each mask, cluster in feature space to get meaningful regions, and use their centers as keypoint candidates
         candidate_keypoints, candidate_pixels, candidate_rigid_group_ids = self._cluster_features(points, features_flat, masks)
         # exclude keypoints that are outside of the workspace
         within_space = filter_points_by_bounds(candidate_keypoints, self.bounds_min, self.bounds_max, strict=True)
@@ -46,14 +50,24 @@ class KeypointProposer:
         return candidate_keypoints, projected
 
     def _preprocess(self, rgb, points, masks):
+        if masks.is_cuda:
+            masks = masks.cpu()
+            # print("***masks", masks)
+            
+        rgb = rgb.cpu()  # move to CPU if on GPU
+        rgb = rgb.numpy() 
+        # print("***rgb", rgb)
+            
         # convert masks to binary masks
-        masks = [masks == uid for uid in np.unique(masks)]
+        masks = [masks == uid for uid in np.unique(masks.numpy())]
+        # print("***masks2", masks)
         # ensure input shape is compatible with dinov2
         H, W, _ = rgb.shape
         patch_h = int(H // self.patch_size)
         patch_w = int(W // self.patch_size)
         new_H = patch_h * self.patch_size
         new_W = patch_w * self.patch_size
+        # print("***rgb2", rgb)
         transformed_rgb = cv2.resize(rgb, (new_W, new_H))
         transformed_rgb = transformed_rgb.astype(np.float32) / 255.0  # float32 [H, W, 3]
         # shape info
@@ -93,6 +107,7 @@ class KeypointProposer:
         # get features
         img_tensors = torch.from_numpy(transformed_rgb).permute(2, 0, 1).unsqueeze(0).to(self.device)  # float32 [1, 3, H, W]
         assert img_tensors.shape[1] == 3, "unexpected image shape"
+        # breakpoint()
         features_dict = self.dinov2.forward_features(img_tensors)
         raw_feature_grid = features_dict['x_norm_patchtokens']  # float32 [num_cams, patch_h*patch_w, feature_dim]
         raw_feature_grid = raw_feature_grid.reshape(1, patch_h, patch_w, -1)  # float32 [num_cams, patch_h, patch_w, feature_dim]
@@ -109,6 +124,8 @@ class KeypointProposer:
         candidate_rigid_group_ids = []
         for rigid_group_id, binary_mask in enumerate(masks):
             # ignore mask that is too large
+            # print("***binary_mask", binary_mask)
+            binary_mask = binary_mask.cpu().numpy()
             if np.mean(binary_mask) > self.config['max_mask_ratio']:
                 continue
             # consider only foreground features

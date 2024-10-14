@@ -15,6 +15,7 @@ from utils import (
     path_length,
     transform_keypoints,
 )
+import torch
 
 # ====================================
 # = objective function
@@ -79,6 +80,7 @@ def objective(opt_vars,
         debug_dict['ik_feasible'].append(ik_result.success)
         ik_cost += 20.0 * (ik_result.num_descents / max_iterations)
         if ik_result.success:
+            reset_joint_pos = reset_joint_pos.detach().cpu().numpy() if torch.is_tensor(reset_joint_pos) else reset_joint_pos
             reset_reg = np.linalg.norm(ik_result.cspace_position[:-1] - reset_joint_pos[:-1])
             reset_reg = np.clip(reset_reg, 0.0, 3.0)
         else:
